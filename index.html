@@ -5,53 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generatore di Plugin Spigot</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #1e1e1e; color: white; }
+        .container { max-width: 700px; margin: auto; background: #333; padding: 20px; border-radius: 10px; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #00aaff; color: white; padding: 10px; width: 100%; border: none; cursor: pointer; }
+        button:hover { background: #0088cc; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .tab-buttons { display: flex; justify-content: space-between; }
+        .tab-buttons button { flex: 1; margin: 5px; }
+    </style>
 </head>
 <body>
-    <h1>Generatore Visuale di Plugin Spigot</h1>
 
-    <label>Nome del Plugin:</label>
-    <input type="text" id="pluginName" placeholder="es. MyPlugin">
-    <br><br>
+    <div class="container">
+        <h2>Generatore Avanzato di Plugin Spigot</h2>
+        
+        <div class="tab-buttons">
+            <button onclick="showTab(1)">Impostazioni</button>
+            <button onclick="showTab(2)">Eventi</button>
+            <button onclick="showTab(3)">NPC</button>
+            <button onclick="showTab(4)">Partite</button>
+        </div>
 
-    <label>Nome del Comando:</label>
-    <input type="text" id="commandName" placeholder="es. salutami">
-    <br><br>
+        <div id="tab-1" class="tab active">
+            <label>Nome del Plugin:</label>
+            <input type="text" id="pluginName" placeholder="Es. MyPlugin">
+            
+            <label>Seleziona la Versione di Spigot:</label>
+            <select id="spigotVersion">
+                <option>1.8</option>
+                <option>1.12</option>
+                <option>1.16</option>
+                <option selected>1.21</option>
+            </select>
 
-    <label>Messaggio di risposta:</label>
-    <input type="text" id="message" placeholder="es. Ciao, mondo!">
-    <br><br>
+            <label>Nome del Comando:</label>
+            <input type="text" id="commandName" placeholder="Es. salutami">
+        </div>
 
-    <label>Attiva Evento Join?</label>
-    <input type="checkbox" id="eventJoin">
-    <br><br>
+        <div id="tab-2" class="tab">
+            <label>Attiva Evento Join?</label>
+            <input type="checkbox" id="eventJoin">
+            
+            <label>Messaggio di Benvenuto:</label>
+            <input type="text" id="joinMessage" placeholder="Es. Benvenuto sul server!">
+        </div>
 
-    <label>Messaggio di Benvenuto:</label>
-    <input type="text" id="joinMessage" placeholder="es. Benvenuto sul server!">
-    <br><br>
+        <div id="tab-3" class="tab">
+            <label>Attiva NPC Personalizzati?</label>
+            <input type="checkbox" id="enableNPC">
+            
+            <label>Nome NPC:</label>
+            <input type="text" id="npcName" placeholder="Es. Guardiano">
+        </div>
 
-    <button onclick="generateJar()">Genera Plugin</button>
-    <br><br>
-    <a id="downloadLink" style="display: none;" download="plugin.jar">Scarica il Plugin</a>
+        <div id="tab-4" class="tab">
+            <label>Attiva Sistema Partite?</label>
+            <input type="checkbox" id="enableMatches">
+            
+            <label>Tempo Massimo (secondi):</label>
+            <input type="number" id="matchTime" placeholder="Es. 300">
+        </div>
+
+        <button onclick="generateJar()">Genera Plugin</button>
+        <br><br>
+        <a id="downloadLink" style="display: none;" download="plugin.jar">Scarica il Plugin</a>
+    </div>
 
     <script>
-        function generateJar() {
-            const pluginName = document.getElementById("pluginName").value.trim();
-            const commandName = document.getElementById("commandName").value.trim();
-            const message = document.getElementById("message").value.trim();
-            const eventJoin = document.getElementById("eventJoin").checked;
-            const joinMessage = document.getElementById("joinMessage").value.trim();
+        function showTab(tabIndex) {
+            $(".tab").removeClass("active");
+            $("#tab-" + tabIndex).addClass("active");
+        }
 
-            if (!pluginName || !commandName || !message) {
+        function generateJar() {
+            const pluginName = $("#pluginName").val().trim();
+            const spigotVersion = $("#spigotVersion").val();
+            const commandName = $("#commandName").val().trim();
+            const eventJoin = $("#eventJoin").is(":checked");
+            const joinMessage = $("#joinMessage").val().trim();
+            const enableNPC = $("#enableNPC").is(":checked");
+            const npcName = $("#npcName").val().trim();
+            const enableMatches = $("#enableMatches").is(":checked");
+            const matchTime = $("#matchTime").val().trim();
+
+            if (!pluginName || !commandName) {
                 alert("Compila tutti i campi obbligatori!");
                 return;
             }
 
             const zip = new JSZip();
 
-            // plugin.yml
             let pluginYml = `name: ${pluginName}
 main: me.${pluginName.toLowerCase()}.Main
-version: 1.21
+version: ${spigotVersion}
 commands:
   ${commandName}:
     description: Comando personalizzato
@@ -59,49 +109,61 @@ commands:
 
             zip.file("plugin.yml", pluginYml);
 
-            // Main.java
             let mainJava = `package me.${pluginName.toLowerCase()};
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.npc.NPC;
+import net.citizensnpcs.api.npc.NPCRegistry;
 
 public class Main extends JavaPlugin implements CommandExecutor, Listener {
     @Override
     public void onEnable() {
         this.getCommand("${commandName}").setExecutor(this);
         ${eventJoin ? 'getServer().getPluginManager().registerEvents(this, this);' : ''}
+        ${enableNPC ? 'spawnNPC();' : ''}
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        sender.sendMessage("${message}");
+        sender.sendMessage("Comando eseguito!");
         return true;
     }
+    
     ${eventJoin ? `
     @org.bukkit.event.EventHandler
     public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
         event.getPlayer().sendMessage("${joinMessage}");
     }` : ''}
+
+    ${enableNPC ? `
+    public void spawnNPC() {
+        NPCRegistry registry = CitizensAPI.getNPCRegistry();
+        NPC npc = registry.createNPC(org.bukkit.entity.EntityType.PLAYER, "${npcName}");
+        npc.spawn(new org.bukkit.Location(Bukkit.getWorld("world"), 0, 65, 0));
+    }` : ''}
+
+    ${enableMatches ? `
+    public void startMatch() {
+        Bukkit.broadcastMessage("Partita iniziata!");
+        Bukkit.getScheduler().runTaskLater(this, () -> Bukkit.broadcastMessage("Partita terminata!"), ${matchTime} * 20);
+    }` : ''}
 }`;
 
             zip.file(`src/me/${pluginName.toLowerCase()}/Main.java`, mainJava);
 
-            // Configurazione YAML
-            let configYml = `command: "${commandName}"
-message: "${message}"`;
-            zip.file("config.yml", configYml);
-
-            // Generazione e Download del JAR
             zip.generateAsync({ type: "blob" }).then(blob => {
-                const link = document.getElementById("downloadLink");
-                link.href = URL.createObjectURL(blob);
-                link.style.display = "block";
-                link.innerText = "Scarica il Plugin";
+                const link = $("#downloadLink");
+                link.attr("href", URL.createObjectURL(blob));
+                link.show().text("Scarica il Plugin");
             });
         }
     </script>
+
 </body>
 </html>
