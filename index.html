@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor Visuale Plugin Spigot</title>
+    <title>Editor Visuale Avanzato per Plugin Spigot</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.11/interact.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: white; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #333; padding: 20px; border-radius: 10px; }
+        .container { max-width: 1400px; margin: auto; background: #333; padding: 20px; border-radius: 10px; }
         .workspace { display: flex; justify-content: space-between; margin-top: 20px; }
         .blocks, .editor { width: 48%; padding: 20px; background: #444; border-radius: 5px; min-height: 400px; }
-        .block { padding: 10px; background: #007bff; color: white; margin: 5px 0; cursor: grab; border-radius: 5px; }
+        .block { padding: 10px; margin: 5px 0; cursor: grab; border-radius: 5px; text-align: center; }
+        .component { background: #8000ff; } /* Viola */
+        .action { background: #00cc66; } /* Verde */
+        .param { background: #ff9900; } /* Arancione */
         .dropzone { min-height: 100px; background: rgba(255, 255, 255, 0.1); padding: 10px; }
         button { background: #00aaff; color: white; padding: 10px; width: 100%; border: none; cursor: pointer; margin-top: 10px; }
         button:hover { background: #0088cc; }
@@ -21,13 +24,14 @@
 <body>
 
     <div class="container">
-        <h2>Editor Visuale Plugin Spigot</h2>
+        <h2>Editor Visuale Avanzato per Plugin Spigot</h2>
 
         <label>Nome del Plugin:</label>
         <input type="text" id="pluginName" placeholder="Es. MyPlugin">
 
-        <label>Seleziona la Versione di Spigot:</label>
+        <label>Versione di Spigot:</label>
         <select id="spigotVersion">
+            <option>1.7</option>
             <option>1.8</option>
             <option>1.12</option>
             <option>1.16</option>
@@ -36,10 +40,12 @@
 
         <div class="workspace">
             <div class="blocks">
-                <h3>Blocchi Azioni</h3>
-                <div class="block" draggable="true" data-type="sendMessage">Send Message</div>
-                <div class="block" draggable="true" data-type="sendTitle">Send Title</div>
-                <div class="block" draggable="true" data-type="spawnEntity">Spawn Entity</div>
+                <h3>Componenti (Viola)</h3>
+                <div class="block component" draggable="true" data-type="command">Comando</div>
+                <div class="block component" draggable="true" data-type="event">Evento</div>
+                <div class="block component" draggable="true" data-type="gui">GUI</div>
+                <div class="block component" draggable="true" data-type="npc">NPC</div>
+                <div class="block component" draggable="true" data-type="minigame">Minigame</div>
             </div>
 
             <div class="editor dropzone">
@@ -64,75 +70,6 @@
                 document.querySelector(".editor").appendChild(event.target.cloneNode(true));
             }
         });
-
-        function generateJar() {
-            const pluginName = document.getElementById("pluginName").value.trim();
-            const spigotVersion = document.getElementById("spigotVersion").value;
-
-            if (!pluginName) {
-                alert("Inserisci un nome per il plugin!");
-                return;
-            }
-
-            const zip = new JSZip();
-            let pluginYml = `name: ${pluginName}
-main: me.${pluginName.toLowerCase()}.Main
-version: ${spigotVersion}
-commands:
-  command:
-    description: Comando personalizzato
-    usage: /command`;
-
-            zip.file("plugin.yml", pluginYml);
-
-            let mainJava = `package me.${pluginName.toLowerCase()};
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
-
-public class Main extends JavaPlugin implements CommandExecutor {
-    @Override
-    public void onEnable() {
-        this.getCommand("command").setExecutor(this);
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            ${generateActions()}
-        }
-        return true;
-    }
-}`;
-
-            zip.file(`src/me/${pluginName.toLowerCase()}/Main.java`, mainJava);
-
-            zip.generateAsync({ type: "blob" }).then(blob => {
-                const link = document.getElementById("downloadLink");
-                link.href = URL.createObjectURL(blob);
-                link.style.display = "block";
-                link.innerText = "Scarica il Plugin";
-            });
-        }
-
-        function generateActions() {
-            let actions = "";
-            document.querySelectorAll(".editor .block").forEach(block => {
-                let type = block.getAttribute("data-type");
-                if (type === "sendMessage") {
-                    actions += 'player.sendMessage("Messaggio personalizzato!");\n';
-                } else if (type === "sendTitle") {
-                    actions += 'player.sendTitle("Titolo!", "Sottotitolo!", 10, 70, 20);\n';
-                } else if (type === "spawnEntity") {
-                    actions += 'player.getWorld().spawnEntity(player.getLocation(), org.bukkit.entity.EntityType.ZOMBIE);\n';
-                }
-            });
-            return actions;
-        }
     </script>
 
 </body>
