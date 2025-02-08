@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore di Plugin Spigot</title>
+</head>
+<body>
+    <h1>Generatore di Plugin Spigot</h1>
+    <label>Nome del Comando:</label>
+    <input type="text" id="commandName" placeholder="es. salutami">
+    <br><br>
+    <label>Messaggio di risposta:</label>
+    <input type="text" id="message" placeholder="es. Ciao, mondo!">
+    <br><br>
+    <button onclick="submitRequest()">Genera Plugin</button>
+    <br><br>
+    <p id="status"></p>
+    <a id="downloadLink" style="display: none;" target="_blank">Scarica il Plugin</a>
+
+    <script>
+        function submitRequest() {
+            const commandName = document.getElementById("commandName").value.trim();
+            const message = document.getElementById("message").value.trim();
+
+            if (!commandName || !message) {
+                alert("Compila tutti i campi!");
+                return;
+            }
+
+            const requestData = JSON.stringify({ command: commandName, message: message });
+
+            fetch("generate-plugin.json", { 
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: requestData
+            })
+            .then(() => {
+                document.getElementById("status").innerText = "Generazione in corso...";
+                setTimeout(() => {
+                    document.getElementById("downloadLink").href = `plugins/${commandName}.jar`;
+                    document.getElementById("downloadLink").style.display = "block";
+                    document.getElementById("status").innerText = "Plugin pronto!";
+                }, 5000); // Simula tempo di generazione
+            })
+            .catch(error => console.error("Errore:", error));
+        }
+    </script>
+</body>
+</html>
