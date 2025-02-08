@@ -4,46 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generatore di Plugin Spigot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-    <h1>Generatore di Plugin Spigot</h1>
+    <h1>Generatore Visuale di Plugin Spigot</h1>
+
+    <label>Nome del Plugin:</label>
+    <input type="text" id="pluginName" placeholder="es. MyPlugin">
+    <br><br>
+
     <label>Nome del Comando:</label>
     <input type="text" id="commandName" placeholder="es. salutami">
     <br><br>
+
     <label>Messaggio di risposta:</label>
     <input type="text" id="message" placeholder="es. Ciao, mondo!">
     <br><br>
-    <button onclick="submitRequest()">Genera Plugin</button>
+
+    <label>Attiva Evento Join?</label>
+    <input type="checkbox" id="eventJoin">
     <br><br>
-    <p id="status"></p>
-    <a id="downloadLink" style="display: none;" target="_blank">Scarica il Plugin</a>
+
+    <label>Messaggio di Benvenuto:</label>
+    <input type="text" id="joinMessage" placeholder="es. Benvenuto sul server!">
+    <br><br>
+
+    <button onclick="generateJar()">Genera Plugin</button>
+    <br><br>
+    <a id="downloadLink" style="display: none;" download="plugin.jar">Scarica il Plugin</a>
 
     <script>
-        function submitRequest() {
+        function generateJar() {
+            const pluginName = document.getElementById("pluginName").value.trim();
             const commandName = document.getElementById("commandName").value.trim();
             const message = document.getElementById("message").value.trim();
+            const eventJoin = document.getElementById("eventJoin").checked;
+            const joinMessage = document.getElementById("joinMessage").value.trim();
 
-            if (!commandName || !message) {
-                alert("Compila tutti i campi!");
+            if (!pluginName || !commandName || !message) {
+                alert("Compila tutti i campi obbligatori!");
                 return;
             }
 
-            const requestData = JSON.stringify({ command: commandName, message: message });
+            const zip = new JSZip();
 
-            fetch("generate-plugin.json", { 
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: requestData
-            })
-            .then(() => {
-                document.getElementById("status").innerText = "Generazione in corso...";
-                setTimeout(() => {
-                    document.getElementById("downloadLink").href = `plugins/${commandName}.jar`;
-                    document.getElementById("downloadLink").style.display = "block";
-                    document.getElementById("status").innerText = "Plugin pronto!";
-                }, 5000); // Simula tempo di generazione
-            })
-            .catch(error => console.error("Errore:", error));
+            // plugin.yml
+            let pluginYml = `name: ${pluginName}
+main: me.${pluginName.toLowerCase()}.Main
+version: 1.21
+commands:
+  ${commandName}:
+    description: Comando personalizzato
+    usage: /${commandName}`;
+
+            zip.file("plugin.yml", pluginYml);
+
+            // Main.java
+            let mainJava = `package me.${pluginName.toLowerCase()};
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class Main extends JavaPlugin implements CommandExecutor, Listener {
+    @Override
+    public void onEnable() {
+        this.getCommand("${commandName}").setExecutor(this);
+        ${eventJoin ? 'getServer().getPluginManager().registerEvents(this, this);' : ''}
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        sender.sendMessage("${message}");
+        return true;
+    }
+    ${eventJoin ? `
+    @org.bukkit.event.EventHandler
+    public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+        event.getPlayer().sendMessage("${joinMessage}");
+    }` : ''}
+}`;
+
+            zip.file(`src/me/${pluginName.toLowerCase()}/Main.java`, mainJava);
+
+            // Configurazione YAML
+            let configYml = `command: "${commandName}"
+message: "${message}"`;
+            zip.file("config.yml", configYml);
+
+            // Generazione e Download del JAR
+            zip.generateAsync({ type: "blob" }).then(blob => {
+                const link = document.getElementById("downloadLink");
+                link.href = URL.createObjectURL(blob);
+                link.style.display = "block";
+                link.innerText = "Scarica il Plugin";
+            });
         }
     </script>
 </body>
