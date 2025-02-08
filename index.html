@@ -3,71 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore di Plugin Spigot</title>
+    <title>Editor Visuale Plugin Spigot</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.11/interact.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #1e1e1e; color: white; }
-        .container { max-width: 700px; margin: auto; background: #333; padding: 20px; border-radius: 10px; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; }
-        button { background: #00aaff; color: white; padding: 10px; width: 100%; border: none; cursor: pointer; }
+        body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: white; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #333; padding: 20px; border-radius: 10px; }
+        .workspace { display: flex; justify-content: space-between; margin-top: 20px; }
+        .blocks, .editor { width: 48%; padding: 20px; background: #444; border-radius: 5px; min-height: 400px; }
+        .block { padding: 10px; background: #007bff; color: white; margin: 5px 0; cursor: grab; border-radius: 5px; }
+        .dropzone { min-height: 100px; background: rgba(255, 255, 255, 0.1); padding: 10px; }
+        button { background: #00aaff; color: white; padding: 10px; width: 100%; border: none; cursor: pointer; margin-top: 10px; }
         button:hover { background: #0088cc; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        .tab-buttons { display: flex; justify-content: space-between; }
-        .tab-buttons button { flex: 1; margin: 5px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Generatore Avanzato di Plugin Spigot</h2>
-        
-        <div class="tab-buttons">
-            <button onclick="showTab(1)">Impostazioni</button>
-            <button onclick="showTab(2)">Eventi</button>
-            <button onclick="showTab(3)">NPC</button>
-            <button onclick="showTab(4)">Partite</button>
-        </div>
+        <h2>Editor Visuale Plugin Spigot</h2>
 
-        <div id="tab-1" class="tab active">
-            <label>Nome del Plugin:</label>
-            <input type="text" id="pluginName" placeholder="Es. MyPlugin">
-            
-            <label>Seleziona la Versione di Spigot:</label>
-            <select id="spigotVersion">
-                <option>1.8</option>
-                <option>1.12</option>
-                <option>1.16</option>
-                <option selected>1.21</option>
-            </select>
+        <label>Nome del Plugin:</label>
+        <input type="text" id="pluginName" placeholder="Es. MyPlugin">
 
-            <label>Nome del Comando:</label>
-            <input type="text" id="commandName" placeholder="Es. salutami">
-        </div>
+        <label>Seleziona la Versione di Spigot:</label>
+        <select id="spigotVersion">
+            <option>1.8</option>
+            <option>1.12</option>
+            <option>1.16</option>
+            <option selected>1.21</option>
+        </select>
 
-        <div id="tab-2" class="tab">
-            <label>Attiva Evento Join?</label>
-            <input type="checkbox" id="eventJoin">
-            
-            <label>Messaggio di Benvenuto:</label>
-            <input type="text" id="joinMessage" placeholder="Es. Benvenuto sul server!">
-        </div>
+        <div class="workspace">
+            <div class="blocks">
+                <h3>Blocchi Azioni</h3>
+                <div class="block" draggable="true" data-type="sendMessage">Send Message</div>
+                <div class="block" draggable="true" data-type="sendTitle">Send Title</div>
+                <div class="block" draggable="true" data-type="spawnEntity">Spawn Entity</div>
+            </div>
 
-        <div id="tab-3" class="tab">
-            <label>Attiva NPC Personalizzati?</label>
-            <input type="checkbox" id="enableNPC">
-            
-            <label>Nome NPC:</label>
-            <input type="text" id="npcName" placeholder="Es. Guardiano">
-        </div>
-
-        <div id="tab-4" class="tab">
-            <label>Attiva Sistema Partite?</label>
-            <input type="checkbox" id="enableMatches">
-            
-            <label>Tempo Massimo (secondi):</label>
-            <input type="number" id="matchTime" placeholder="Es. 300">
+            <div class="editor dropzone">
+                <h3>Editor (Trascina Qui)</h3>
+            </div>
         </div>
 
         <button onclick="generateJar()">Genera Plugin</button>
@@ -76,36 +53,35 @@
     </div>
 
     <script>
-        function showTab(tabIndex) {
-            $(".tab").removeClass("active");
-            $("#tab-" + tabIndex).addClass("active");
-        }
+        interact('.block').draggable({
+            inertia: true,
+            autoScroll: true,
+            onmove: function(event) {
+                var target = event.target;
+                target.style.transform = `translate(${event.dx}px, ${event.dy}px)`;
+            },
+            onend: function(event) {
+                document.querySelector(".editor").appendChild(event.target.cloneNode(true));
+            }
+        });
 
         function generateJar() {
-            const pluginName = $("#pluginName").val().trim();
-            const spigotVersion = $("#spigotVersion").val();
-            const commandName = $("#commandName").val().trim();
-            const eventJoin = $("#eventJoin").is(":checked");
-            const joinMessage = $("#joinMessage").val().trim();
-            const enableNPC = $("#enableNPC").is(":checked");
-            const npcName = $("#npcName").val().trim();
-            const enableMatches = $("#enableMatches").is(":checked");
-            const matchTime = $("#matchTime").val().trim();
+            const pluginName = document.getElementById("pluginName").value.trim();
+            const spigotVersion = document.getElementById("spigotVersion").value;
 
-            if (!pluginName || !commandName) {
-                alert("Compila tutti i campi obbligatori!");
+            if (!pluginName) {
+                alert("Inserisci un nome per il plugin!");
                 return;
             }
 
             const zip = new JSZip();
-
             let pluginYml = `name: ${pluginName}
 main: me.${pluginName.toLowerCase()}.Main
 version: ${spigotVersion}
 commands:
-  ${commandName}:
+  command:
     description: Comando personalizzato
-    usage: /${commandName}`;
+    usage: /command`;
 
             zip.file("plugin.yml", pluginYml);
 
@@ -113,55 +89,49 @@ commands:
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
-import net.citizensnpcs.api.CitizensAPI;
-import net.citizensnpcs.api.npc.NPC;
-import net.citizensnpcs.api.npc.NPCRegistry;
+import org.bukkit.plugin.java.JavaPlugin;
 
-public class Main extends JavaPlugin implements CommandExecutor, Listener {
+public class Main extends JavaPlugin implements CommandExecutor {
     @Override
     public void onEnable() {
-        this.getCommand("${commandName}").setExecutor(this);
-        ${eventJoin ? 'getServer().getPluginManager().registerEvents(this, this);' : ''}
-        ${enableNPC ? 'spawnNPC();' : ''}
+        this.getCommand("command").setExecutor(this);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        sender.sendMessage("Comando eseguito!");
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            ${generateActions()}
+        }
         return true;
     }
-    
-    ${eventJoin ? `
-    @org.bukkit.event.EventHandler
-    public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
-        event.getPlayer().sendMessage("${joinMessage}");
-    }` : ''}
-
-    ${enableNPC ? `
-    public void spawnNPC() {
-        NPCRegistry registry = CitizensAPI.getNPCRegistry();
-        NPC npc = registry.createNPC(org.bukkit.entity.EntityType.PLAYER, "${npcName}");
-        npc.spawn(new org.bukkit.Location(Bukkit.getWorld("world"), 0, 65, 0));
-    }` : ''}
-
-    ${enableMatches ? `
-    public void startMatch() {
-        Bukkit.broadcastMessage("Partita iniziata!");
-        Bukkit.getScheduler().runTaskLater(this, () -> Bukkit.broadcastMessage("Partita terminata!"), ${matchTime} * 20);
-    }` : ''}
 }`;
 
             zip.file(`src/me/${pluginName.toLowerCase()}/Main.java`, mainJava);
 
             zip.generateAsync({ type: "blob" }).then(blob => {
-                const link = $("#downloadLink");
-                link.attr("href", URL.createObjectURL(blob));
-                link.show().text("Scarica il Plugin");
+                const link = document.getElementById("downloadLink");
+                link.href = URL.createObjectURL(blob);
+                link.style.display = "block";
+                link.innerText = "Scarica il Plugin";
             });
+        }
+
+        function generateActions() {
+            let actions = "";
+            document.querySelectorAll(".editor .block").forEach(block => {
+                let type = block.getAttribute("data-type");
+                if (type === "sendMessage") {
+                    actions += 'player.sendMessage("Messaggio personalizzato!");\n';
+                } else if (type === "sendTitle") {
+                    actions += 'player.sendTitle("Titolo!", "Sottotitolo!", 10, 70, 20);\n';
+                } else if (type === "spawnEntity") {
+                    actions += 'player.getWorld().spawnEntity(player.getLocation(), org.bukkit.entity.EntityType.ZOMBIE);\n';
+                }
+            });
+            return actions;
         }
     </script>
 
