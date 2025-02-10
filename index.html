@@ -3,51 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor Visuale per Plugin Spigot</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Sigla I Cesaroni</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        button {
+            font-size: 20px; padding: 10px 20px;
+            background-color: red; color: white;
+            border: none; cursor: pointer; border-radius: 5px;
+        }
+        button:hover { background-color: darkred; }
+        #player { width: 0px; height: 0px; visibility: hidden; } /* Nasconde il video */
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Editor Visuale per Plugin Spigot</h1>
-        <input type="text" id="search" placeholder="Cerca blocco..." onkeyup="searchBlocks()">
-    </header>
-    <div class="container">
-        <div class="blocks">
-            <h2>Blocchi Disponibili</h2>
-            <h3>Componenti (Viola)</h3>
-            <div class="block viola" draggable="true" data-type="command">Comando</div>
-            <div class="block viola" draggable="true" data-type="event">Evento</div>
-            <div class="block viola" draggable="true" data-type="gui">GUI</div>
-            <div class="block viola" draggable="true" data-type="npc">NPC</div>
-            <div class="block viola" draggable="true" data-type="scoreboard">Scoreboard</div>
-            <div class="block viola" draggable="true" data-type="database">Database</div>
-            <div class="block viola" draggable="true" data-type="pluginSettings">Impostazioni Plugin</div>
-            <h3>Azioni (Verdi)</h3>
-            <div class="block verde" draggable="true" data-type="sendMessage">Invia Messaggio</div>
-            <div class="block verde" draggable="true" data-type="teleport">Teletrasporta</div>
-            <div class="block verde" draggable="true" data-type="spawnEntity">Genera Entità</div>
-            <div class="block verde" draggable="true" data-type="playSound">Riproduci Suono</div>
-            <div class="block verde" draggable="true" data-type="particles">Effetti Particelle</div>
-            <h3>Parametri (Arancioni)</h3>
-            <div class="block arancione" draggable="true" data-type="player">Giocatore</div>
-            <div class="block arancione" draggable="true" data-type="location">Posizione</div>
-            <div class="block arancione" draggable="true" data-type="message">Messaggio</div>
-            <div class="block arancione" draggable="true" data-type="number">Numero</div>
-            <div class="block arancione" draggable="true" data-type="itemStack">Oggetto</div>
-        </div>
 
-        <!-- Area di lavoro -->
-        <div class="workspace dropzone" id="workspace">
-            <h2>Area di Lavoro</h2>
-        </div>
-    </div>
-    <div style="text-align: center;">
-        <button onclick="generateCode()">Genera Codice</button>
-        <button onclick="downloadCode()">Scarica Plugin</button>
-        <button onclick="saveProject()">Salva Progetto</button>
-        <button onclick="loadProject()">Carica Progetto</button>
-    </div>
+    <h1>🎵 Sigla I Cesaroni 🎵</h1>
+    <button onclick="playAudio()">▶ Play</button>
+    <button onclick="pauseAudio()">⏸ Pause</button>
 
-    <script src="script.js"></script>
+    <div id="player"></div>
+
+    <script>
+        let player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '0',
+                width: '0',
+                videoId: 'XZOKFzT0s3A', // Video della sigla de I Cesaroni
+                events: { 'onReady': onPlayerReady }
+            });
+        }
+
+        function onPlayerReady(event) {
+            console.log("YouTube Player Pronto");
+        }
+
+        function playAudio() {
+            if (player) player.playVideo();
+        }
+
+        function pauseAudio() {
+            if (player) player.pauseVideo();
+        }
+
+        // Carica l'API di YouTube
+        let tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        let firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    </script>
+
 </body>
 </html>
